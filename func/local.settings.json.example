@@ -1,0 +1,17 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "FUNCTIONS_NODE_BLOCK_ON_ENTRY_POINT_TIMEOUT_MS": "30000",
+
+    "SPO_TENANT_HOST": "contoso.sharepoint.com",
+    "LINK_INVENTORY_ADMIN_GROUP_ID": "<entra-group-guid-of-the-admin-group>",
+
+    "STORAGE_CONNECTION_STRING": "UseDevelopmentStorage=true",
+
+    "ENTRA_TENANT_ID": "<your-entra-tenant-guid>",
+    "ENTRA_CLIENT_ID": "<your-entra-app-client-id>",
+    "ENTRA_FEDERATED_AUDIENCE": "api://AzureADTokenExchange"
+  }
+}

@@ -1,0 +1,41 @@
+node_modules/
+dist/
+dist-test/
+lib/
+lib-commonjs/
+*.tsbuildinfo
+
+# Azure Functions
+local.settings.json
+.python_packages/
+bin/
+obj/
+
+# Per-deploy outputs (created by setup-entra.sh, captured from Bicep)
+scripts/.entra-output.env
+scripts/.cert/
+deploy-output.env
+
+# SPFx
+**/sharepoint/solution/
+release/
+temp/
+.heft/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.claude/
+CLAUDE.md
+
+# Test artifacts
+coverage/
+.nyc_output/
+.playwright-mcp/
+scenarioA-bytes-v2.txt

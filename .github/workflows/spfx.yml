@@ -1,0 +1,42 @@
+name: spfx
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'spfx/**'
+      - '.github/workflows/spfx.yml'
+  pull_request:
+    paths:
+      - 'spfx/**'
+      - '.github/workflows/spfx.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: spfx/link-inventory-admin
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # SPFx 1.22 engines spec: >=18.17.1 <19.0.0 || >=22.14.0 <23.0.0
+          # Node 20 is rejected by the package's engines check.
+          node-version: 22
+          cache: npm
+          cache-dependency-path: spfx/link-inventory-admin/package-lock.json
+
+      # Node 22's bundled npm is 10.x; the committed lock file was
+      # generated with npm 11. `npm ci` is strict and trips on the
+      # `overrides` tracking difference. `npm install` is more lenient
+      # and resolves the same tree successfully.
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      # Dev build only — production build runs `heft package-solution` which
+      # needs a writable artifacts dir and adds noise to the CI signal. The
+      # important things — TypeScript, sass, webpack — all run in `build:dev`.
+      - name: Heft dev build
+        run: npm run build:dev

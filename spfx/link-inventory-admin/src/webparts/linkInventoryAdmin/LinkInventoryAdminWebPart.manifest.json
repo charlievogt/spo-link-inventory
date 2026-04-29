@@ -1,0 +1,23 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx/client-side-web-part-manifest.schema.json",
+  "id": "28568c17-784e-43f1-b91b-a8e21f345733",
+  "alias": "LinkInventoryAdminWebPart",
+  "componentType": "WebPart",
+  "version": "*",
+  "manifestVersion": 2,
+  "requiresCustomScript": false,
+  "safeWithCustomScriptDisabled": true,
+  "supportedHosts": ["SharePointWebPart"],
+  "preconfiguredEntries": [
+    {
+      "groupId": "cf066440-3577-4f34-aea2-2e03f6d4cda4",
+      "group": { "default": "Tools" },
+      "title": { "default": "Link Inventory Admin" },
+      "description": { "default": "Browse the tenant-wide link inventory and duplicate-file report" },
+      "properties": {
+        "functionUrl": "",
+        "entraAppApiUri": ""
+      }
+    }
+  ]
+}

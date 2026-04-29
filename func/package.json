@@ -1,0 +1,33 @@
+{
+  "name": "@spo-link-inventory/func",
+  "version": "0.1.0",
+  "description": "Azure Function backend for spo-link-inventory: page + document scanner, find-and-replace, backlinks index, duplicate detection",
+  "main": "dist/src/index.js",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "pretest": "tsc -p tsconfig.test.json",
+    "test": "bash -O globstar -c \"node --import ./dist-test/src/__tests__/test-setup.js --test dist-test/**/*.test.js\"",
+    "start": "func start",
+    "prestart": "npm run build"
+  },
+  "dependencies": {
+    "@azure/data-tables": "^13.3.0",
+    "@azure/functions": "^4.6.0",
+    "@azure/identity": "^4.5.0",
+    "@azure/storage-blob": "^12.26.0",
+    "@azure/storage-queue": "^12.29.0",
+    "jszip": "^3.10.1",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^4.10.38"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "azure-functions-core-tools": "^4.0.0",
+    "typescript": "^5.4.0"
+  },
+  "overrides": {
+    "uuid": "^14.0.0",
+    "brace-expansion": "^2.0.3"
+  }
+}

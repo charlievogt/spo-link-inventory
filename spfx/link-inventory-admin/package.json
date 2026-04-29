@@ -1,0 +1,47 @@
+{
+  "name": "spfx-link-inventory-admin",
+  "version": "0.1.3",
+  "private": true,
+  "main": "lib/index.js",
+  "engines": {
+    "node": ">=18.17.1 <23.0.0"
+  },
+  "scripts": {
+    "build": "heft build --clean --production && heft package-solution --production",
+    "build:dev": "heft build --clean",
+    "start": "heft start --clean",
+    "clean": "heft clean"
+  },
+  "dependencies": {
+    "@fluentui/react": "^8.120.0",
+    "@microsoft/sp-core-library": "1.22.0",
+    "@microsoft/sp-component-base": "1.22.0",
+    "@microsoft/sp-http": "1.22.0",
+    "@microsoft/sp-property-pane": "1.22.0",
+    "@microsoft/sp-webpart-base": "1.22.0",
+    "react": "17.0.1",
+    "react-dom": "17.0.1",
+    "tslib": "2.3.1"
+  },
+  "devDependencies": {
+    "@microsoft/eslint-config-spfx": "1.22.0",
+    "@microsoft/eslint-plugin-spfx": "1.22.0",
+    "@microsoft/sp-module-interfaces": "1.22.0",
+    "@microsoft/spfx-heft-plugins": "1.22.0",
+    "@microsoft/spfx-web-build-rig": "1.22.0",
+    "@rushstack/eslint-config": "4.5.2",
+    "@rushstack/heft": "1.1.2",
+    "@types/react": "17.0.49",
+    "@types/react-dom": "17.0.19",
+    "@types/webpack-env": "~1.15.2",
+    "@typescript-eslint/parser": "8.46.2",
+    "eslint": "^8.57.0",
+    "typescript": "~5.8.0"
+  },
+  "overrides": {
+    "ajv": "^8.18.0",
+    "schema-utils": {
+      "ajv": "^6.14.0"
+    }
+  }
+}

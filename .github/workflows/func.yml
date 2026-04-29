@@ -1,0 +1,36 @@
+name: func
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'func/**'
+      - '.github/workflows/func.yml'
+  pull_request:
+    paths:
+      - 'func/**'
+      - '.github/workflows/func.yml'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: func
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: func/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript build
+        run: npm run build
+
+      - name: Run tests
+        run: npm test

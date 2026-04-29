@@ -1,0 +1,7 @@
+*.js.map
+*.ts
+!dist/**/*.js
+src/**/*.test.*
+dist-test/
+tsconfig*.json
+local.settings.json

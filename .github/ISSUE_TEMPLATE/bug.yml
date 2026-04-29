@@ -1,0 +1,74 @@
+name: Bug report
+description: Something isn't working as documented
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug. The more concrete the repro, the faster the fix.
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Which component
+      options:
+        - func (Azure Function backend)
+        - spfx (admin web part)
+        - infra (Bicep templates)
+        - scripts (deploy automation)
+        - docs (deploy guide / README)
+        - not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe what you were trying to do and what went wrong.
+      placeholder: I ran `func azure functionapp publish ...` and got HTTP 500 on every endpoint after.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+      placeholder: 401 from /whoami without auth, like the deploy guide says.
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Exact commands you ran, in order.
+      render: bash
+      placeholder: |
+        cd func
+        npm run build
+        func azure functionapp publish $FUNCTION_APP_NAME --typescript --build remote
+        curl https://$FUNCTION_APP_NAME.azurewebsites.net/api/link-inventory/whoami
+    validations:
+      required: true
+
+  - type: textarea
+    id: env
+    attributes:
+      label: Environment
+      description: OS, Node version (`node --version`), az version (`az --version | head -1`), func core tools version (`func --version`), commit SHA you're on.
+      placeholder: |
+        - OS: Windows 11 / macOS 14.5 / Ubuntu 22.04
+        - Node: 20.11.0
+        - az: 2.85.0
+        - func: 4.0.5
+        - SHA: <git rev-parse HEAD>
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Function App logs from Application Insights, or browser console output, or shell error. Strip anything sensitive (tokens, account IDs you don't want public).
+      render: text

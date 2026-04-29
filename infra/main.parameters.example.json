@@ -1,0 +1,13 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "projectName": { "value": "link-inventory-dev" },
+    "location": { "value": "centralus" },
+    "spoTenantHost": { "value": "contoso.sharepoint.com" },
+    "entraTenantId": { "value": "00000000-0000-0000-0000-000000000000" },
+    "entraClientId": { "value": "00000000-0000-0000-0000-000000000000" },
+    "adminGroupId": { "value": "00000000-0000-0000-0000-000000000000" },
+    "legacySpHosts": { "value": "" }
+  }
+}

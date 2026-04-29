@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security finding
+    url: https://github.com/charlievogt/spo-link-inventory/blob/main/CONTRIBUTING.md#reporting-security-issues
+    about: Don't file a public issue. See CONTRIBUTING.md for the disclosure path.

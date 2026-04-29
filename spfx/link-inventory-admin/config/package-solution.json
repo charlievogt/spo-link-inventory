@@ -1,0 +1,46 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/package-solution.schema.json",
+  "solution": {
+    "name": "Link Inventory Admin",
+    "id": "d97f31aa-9484-45a1-bc14-575baf3887df",
+    "version": "0.1.3.0",
+    "includeClientSideAssets": true,
+    "skipFeatureDeployment": true,
+    "isDomainIsolated": false,
+    "webApiPermissionRequests": [
+      {
+        "resource": "link-inventory-func",
+        "scope": "user_impersonation"
+      }
+    ],
+    "developer": {
+      "name": "spo-link-inventory contributors",
+      "websiteUrl": "https://github.com/charlie-vogt/spo-link-inventory",
+      "privacyUrl": "",
+      "termsOfUseUrl": "",
+      "mpnId": ""
+    },
+    "metadata": {
+      "shortDescription": {
+        "default": "Tenant-wide SharePoint link inventory and duplicate-file detection"
+      },
+      "longDescription": {
+        "default": "Admin web part for browsing the link inventory, running tenant-wide page + document scans, find-and-replace across links, and reviewing duplicate files (exact-hash, stale-copy, same-name)."
+      },
+      "screenshotPaths": [],
+      "videoUrl": "",
+      "categories": []
+    },
+    "features": [
+      {
+        "title": "Link Inventory Admin Web Part",
+        "description": "Deploys the Link Inventory Admin web part.",
+        "id": "2561f528-a261-453a-a339-776be2df55b8",
+        "version": "0.1.3.0"
+      }
+    ]
+  },
+  "paths": {
+    "zippedPackage": "solution/link-inventory-admin.sppkg"
+  }
+}
