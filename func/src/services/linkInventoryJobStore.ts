@@ -269,14 +269,33 @@ export async function getJob(jobId: string): Promise<LinkInventoryJob | undefine
   }
 }
 
-export async function listJobs(limit = 50): Promise<LinkInventoryJob[]> {
+/**
+ * List recent jobs, newest-first.
+ *
+ * `kinds` filters to specific job kinds (`pages`, `documents`,
+ * `orphan-recycle`). Default is `['pages', 'documents']` so the
+ * link-inventory UI's scan dropdown only ever sees scan jobs;
+ * orphan-recycle audit jobs share the table but live conceptually
+ * under the Orphans tab. Pass `undefined` (no filter) to see every
+ * job kind.
+ */
+export async function listJobs(
+  limit = 50,
+  kinds: JobKind[] | undefined = ["pages", "documents"],
+): Promise<LinkInventoryJob[]> {
   await ensureTable();
   const out: LinkInventoryJob[] = [];
   const iter = getJobsTable().listEntities<JobEntity>({
     queryOptions: { filter: `PartitionKey eq '${PARTITION_KEY}'` },
   });
   for await (const e of iter) {
-    out.push(fromEntity(e));
+    const job = fromEntity(e);
+    if (kinds) {
+      // Older rows pre-date the `kind` column; default them to "pages".
+      const kind: JobKind = job.kind ?? "pages";
+      if (!kinds.includes(kind)) continue;
+    }
+    out.push(job);
     if (out.length >= limit) break;
   }
   // Newest first
