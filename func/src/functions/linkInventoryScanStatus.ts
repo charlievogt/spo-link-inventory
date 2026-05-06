@@ -98,6 +98,22 @@ async function resultsHandler(
     };
   }
 
+  // Orphan-recycle audit jobs share the table + writeResults convention with
+  // scan jobs but use a different blob shape (no `sites` array; per-file
+  // `results`). Refuse them here so callers don't trip the .sites.map below.
+  // The audit history surfaces under the Orphans tab via its own endpoint.
+  if (job.kind === "orphan-recycle") {
+    return {
+      status: 400,
+      jsonBody: {
+        ok: false,
+        error:
+          `Job ${jobId} is an orphan-recycle audit, not a scan. ` +
+          `Audit history lives under the Orphans tab.`,
+      },
+    };
+  }
+
   const raw = (await readResults(jobId)) as AggregateResults | undefined;
   if (!raw) return { status: 404, jsonBody: { ok: false, error: "Results blob missing" } };
 
