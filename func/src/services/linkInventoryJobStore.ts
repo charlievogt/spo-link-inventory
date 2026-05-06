@@ -62,7 +62,7 @@ async function ensureContainer(): Promise<void> {
 }
 
 export type JobStatus = "queued" | "running" | "completed" | "failed";
-export type JobKind = "pages" | "documents";
+export type JobKind = "pages" | "documents" | "orphan-recycle";
 
 /**
  * The header row stored per-job. Counters get bumped as the orchestrator

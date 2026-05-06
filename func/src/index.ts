@@ -32,3 +32,5 @@ import "./functions/duplicatesBootstrapCancel.js";
 import "./functions/duplicatesBootstrapWorker.js";
 import "./functions/linkInventorySchedule.js";
 import "./functions/linkInventoryScheduleTimer.js";
+import "./functions/orphanAssetsReport.js";
+import "./functions/orphanAssetsRecycle.js";

@@ -1,4 +1,4 @@
-import { fetchSitePages, type SitePageItem } from "./spoPagesClient.js";
+import { fetchSitePages, extractBannerImageUrl, type SitePageItem } from "./spoPagesClient.js";
 import { extractLinksFromCanvas, type ExtractedLink } from "./canvasLinkExtractor.js";
 import { normalizeUrl } from "./urlNormalizer.js";
 import { getTenantHost, getTenantOrigin } from "./config.js";
@@ -310,6 +310,22 @@ export function buildPageInventory(item: SitePageItem): PageInventory {
     ];
   } catch (e) {
     parseError = (e as Error).message;
+  }
+
+  // Banner image URL lives on the page-level BannerImageUrl field, not
+  // inside CanvasContent1 or LayoutWebpartsContent. The title-region
+  // web part stores `imageSourceType: 4` ("URL") with `imageSources: {}`
+  // — the actual URL is on the list item field. Without this synthesis,
+  // a banner-only asset (no other web-part reference) is invisible to
+  // the backlinks index and would false-flag as orphan.
+  const bannerUrl = extractBannerImageUrl(item.BannerImageUrl);
+  if (bannerUrl) {
+    links.push({
+      rawUrl: bannerUrl,
+      url: bannerUrl,
+      source: "banner",
+      // No webPartInstanceId — banner is page-level, not a web part.
+    });
   }
 
   return {

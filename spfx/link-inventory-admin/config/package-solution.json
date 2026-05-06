@@ -3,7 +3,7 @@
   "solution": {
     "name": "Link Inventory Admin",
     "id": "d97f31aa-9484-45a1-bc14-575baf3887df",
-    "version": "0.1.3.0",
+    "version": "0.1.4.0",
     "includeClientSideAssets": true,
     "skipFeatureDeployment": true,
     "isDomainIsolated": false,
@@ -36,7 +36,7 @@
         "title": "Link Inventory Admin Web Part",
         "description": "Deploys the Link Inventory Admin web part.",
         "id": "2561f528-a261-453a-a339-776be2df55b8",
-        "version": "0.1.3.0"
+        "version": "0.1.4.0"
       }
     ]
   },

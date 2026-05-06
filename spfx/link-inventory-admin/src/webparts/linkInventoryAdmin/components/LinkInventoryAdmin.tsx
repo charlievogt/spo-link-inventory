@@ -5,6 +5,7 @@ import type { SPHttpClient, AadHttpClientFactory, HttpClient } from '@microsoft/
 import { LinkInventoryService } from '../services/LinkInventoryService';
 import { LinkInventoryTab } from './LinkInventoryTab';
 import { DuplicatesTab } from './DuplicatesTab';
+import { OrphansTab } from './OrphansTab';
 import { HelpTab } from './HelpTab';
 
 export interface ILinkInventoryAdminProps {
@@ -82,6 +83,12 @@ export class LinkInventoryAdmin extends React.Component<ILinkInventoryAdminProps
             <DuplicatesTab
               service={this.linkInventoryService}
               tenantOrigin={this.props.tenantOrigin}
+              onError={this._onError}
+            />
+          </PivotItem>
+          <PivotItem headerText="Orphans" itemKey="orphans" itemIcon="DependencyRemove">
+            <OrphansTab
+              service={this.linkInventoryService}
               onError={this._onError}
             />
           </PivotItem>
