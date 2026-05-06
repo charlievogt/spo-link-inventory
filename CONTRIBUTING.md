@@ -10,9 +10,9 @@ You need:
 - Bash (git-bash on Windows works)
 - Azure CLI 2.50+
 - Azure Functions Core Tools v4
-- (For SPFx) `npm install` inside `spfx/link-inventory-admin/` — uses Heft toolchain, separate from `func/`
+- (For SPFx) `npm install` inside `spfx/link-inventory-admin/` (uses Heft toolchain, separate from `func/`)
 
-The two packages are **standalone** — no workspaces, no shared dependency. The URL normalizer logic that's used by both is small enough that we duplicated it (in `func/src/services/urlNormalizer.ts` and `spfx/.../components/linkSuggestionClient.ts`) rather than introducing a build-time dependency that breaks Linux Consumption deploys.
+The two packages are **standalone**: no workspaces, no shared dependency. The URL normalizer logic that's used by both is small enough that we duplicated it (in `func/src/services/urlNormalizer.ts` and `spfx/.../components/linkSuggestionClient.ts`) rather than introducing a build-time dependency that breaks Linux Consumption deploys.
 
 ## Local dev loop
 
@@ -37,7 +37,7 @@ npm run start       # workbench on https://localhost:4321
 
 ## Adding a new function endpoint
 
-The Azure Functions v4 programming model has a sharp edge: every `functions/<name>.ts` file MUST be imported in `src/index.ts`. Adding a new function file without the matching import results in the endpoint silently missing at runtime — TypeScript builds clean, deploys succeed, but `/api/<your-route>` returns 404. Always update `src/index.ts` when you add a function file.
+The Azure Functions v4 programming model has a sharp edge: every `functions/<name>.ts` file MUST be imported in `src/index.ts`. Adding a new function file without the matching import results in the endpoint silently missing at runtime: TypeScript builds clean, deploys succeed, but `/api/<your-route>` returns 404. Always update `src/index.ts` when you add a function file.
 
 When the new endpoint reads an environment variable at module-init time (a `const X = process.env.FOO` at the top level of a service file), add a default for it in `func/src/__tests__/test-setup.ts` or your tests will fail at module import.
 
@@ -51,12 +51,12 @@ When the new endpoint reads an environment variable at module-init time (a `cons
 ## Testing
 
 - Unit tests in `func/src/__tests__/` use the Node `node --test` runner. No Jest, no Mocha. Tests are loaded via a `--import` setup file that pre-populates env vars consumed at module-init time.
-- Integration tests against a real tenant: not committed. Test scripts live under `.tmp-*` patterns and are gitignored — run them ad-hoc.
+- Integration tests against a real tenant: not committed. Test scripts live under `.tmp-*` patterns and are gitignored. Run them ad-hoc.
 - SPFx tests: not currently set up; PRs welcome.
 
 ## Pull requests
 
-1. Open an issue first for anything non-trivial — easier to align on scope.
+1. Open an issue first for anything non-trivial. Easier to align on scope.
 2. Branch from `main`. No feature branches required for tiny changes; for anything bigger, name the branch by topic.
 3. CI runs `func` build+test on every PR and `spfx` build:dev on every PR. Both must pass.
 4. Squash on merge.
@@ -71,7 +71,7 @@ npm run build
 func azure functionapp publish $FUNCTION_APP_NAME --typescript --build remote
 ```
 
-Settings + role assignments + the federated credential persist — don't need to redo Bicep / setup-entra unless infra itself changes.
+Settings + role assignments + the federated credential persist; you don't need to redo Bicep / setup-entra unless infra itself changes.
 
 ## Reporting security issues
 

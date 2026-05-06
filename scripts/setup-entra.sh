@@ -243,11 +243,21 @@ for role_id in "${APP_PERM_ROLE_IDS[@]}"; do
     continue
   fi
   echo "==> Granting application role $role_id ..."
-  az rest --method POST \
+  # Tolerate "already exists" — the prior admin-consent step may have
+  # created the assignment between our GET-check and this POST (Graph
+  # propagation race). Treating it as success keeps the script idempotent.
+  GRANT_OUT=$(az rest --method POST \
     --url "https://graph.microsoft.com/v1.0/servicePrincipals/$APP_SP_ID/appRoleAssignedTo" \
     --headers "Content-Type=application/json" \
     --body "{\"principalId\": \"$APP_SP_ID\", \"resourceId\": \"$SPO_SP_ID\", \"appRoleId\": \"$role_id\"}" \
-    >/dev/null
+    2>&1) || {
+    if echo "$GRANT_OUT" | grep -q "already exists"; then
+      echo "    (already granted — skipping)"
+    else
+      echo "    Grant POST failed: $GRANT_OUT" >&2
+      exit 1
+    fi
+  }
 done
 
 # 7. Auth credential — cert OR federated credential

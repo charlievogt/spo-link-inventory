@@ -18,6 +18,14 @@ export interface SitePageItem {
   CanvasContent1?: string | null;
   LayoutWebpartsContent?: string | null;
   /**
+   * Page-level banner image URL. Returned by SP REST as either a plain
+   * string or a URL-field object (`{ Url, Description }`) depending on
+   * site configuration; the scanner unwraps via `extractBannerImageUrl`.
+   * Required for orphan-asset detection: banner-only references don't
+   * appear in CanvasContent1 or LayoutWebpartsContent.
+   */
+  BannerImageUrl?: string | { Url?: string; Description?: string } | null;
+  /**
    * SharePoint list item ETag, captured at scan time. Used by the
    * find-and-replace write path to detect lost-update races: if the
    * page has been edited since the scan, the write is refused with a
@@ -26,6 +34,22 @@ export interface SitePageItem {
    * If-Match expects to receive it).
    */
   etag?: string;
+}
+
+/**
+ * Pull a string URL out of a SitePageItem.BannerImageUrl regardless of
+ * which on-the-wire shape SP returned (string vs. URL-field object).
+ * Returns undefined when the field is missing/empty.
+ */
+export function extractBannerImageUrl(
+  field: SitePageItem["BannerImageUrl"],
+): string | undefined {
+  if (!field) return undefined;
+  if (typeof field === "string") return field.length > 0 ? field : undefined;
+  if (typeof field === "object" && typeof field.Url === "string" && field.Url.length > 0) {
+    return field.Url;
+  }
+  return undefined;
 }
 
 // We deliberately do NOT request `Title` here. Some site collections —
@@ -42,6 +66,7 @@ const SELECT_FIELDS = [
   "Modified",
   "CanvasContent1",
   "LayoutWebpartsContent",
+  "BannerImageUrl",
 ].join(",");
 
 interface RawListItem extends SitePageItem {

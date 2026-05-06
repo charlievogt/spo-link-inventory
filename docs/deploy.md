@@ -5,7 +5,7 @@ End-to-end deployment of the function backend. Estimated time: 15–25 minutes f
 ## Prerequisites
 
 - **Azure subscription** in any tenant. Free-tier always-free quota is plenty for a smoke test ($0/month expected).
-- **SharePoint Online tenant** where you want the function to scan. Often a different tenant from the Azure subscription — both are supported.
+- **SharePoint Online tenant** where you want the function to scan. Often a different tenant from the Azure subscription; both are supported.
 - Tools installed locally:
   - [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) ≥ 2.50
   - [Azure Functions Core Tools](https://learn.microsoft.com/azure/azure-functions/functions-run-local) v4
@@ -28,15 +28,15 @@ End-to-end deployment of the function backend. Estimated time: 15–25 minutes f
 
 Two supported auth modes between the Function App and the Entra app in the SharePoint tenant:
 
-- **`cert` (default)** — the Function App holds a private key in app settings (or a Key Vault reference for production); the matching public cert is uploaded to the Entra app. Works any-tenant, including the common case of *Azure subscription in tenant A, SharePoint in tenant B*.
-- **`federation`** — the Function App's system-assigned managed identity federates into the Entra app via a federated credential. No credential at rest. **Only works when the MI and the Entra app live in the same Entra tenant** — Microsoft blocks Entra-to-Entra federation cross-tenant under [AADSTS700236](https://learn.microsoft.com/entra/identity-platform/reference-error-codes).
+- **`cert` (default).** The Function App holds a private key in app settings (or a Key Vault reference for production); the matching public cert is uploaded to the Entra app. Works any-tenant, including the common case of *Azure subscription in tenant A, SharePoint in tenant B*.
+- **`federation`.** The Function App's system-assigned managed identity federates into the Entra app via a federated credential. No credential at rest. **Only works when the MI and the Entra app live in the same Entra tenant;** Microsoft blocks Entra-to-Entra federation cross-tenant under [AADSTS700236](https://learn.microsoft.com/entra/identity-platform/reference-error-codes).
 
-Both modes produce app-only tokens with `appidacr=2`, which SharePoint REST (notably the search endpoint) requires. The deprecated `client_secret` path produces `appidacr=1` tokens that SP rejects with *"Unsupported app only token"* — that's why this repo doesn't offer a secret mode.
+Both modes produce app-only tokens with `appidacr=2`, which SharePoint REST (notably the search endpoint) requires. The deprecated `client_secret` path produces `appidacr=1` tokens that SP rejects with *"Unsupported app only token"*; that's why this repo doesn't offer a secret mode.
 
 For app-level SP permissions on the Entra app, two options:
 
-- **`broad` (default)** — `Sites.Read.All` + `Sites.FullControl.All` (Application). Tenant-wide read enables the scanner to walk SP search across all sites. Find/replace writes still go through user OBO, so the *calling user* must have edit rights on a target site for any mutation to succeed.
-- **`selected`** — `Sites.Selected` (Application) + per-site grants via `Grant-PnPAzureADAppSitePermission`. The app sees only sites you explicitly grant. Set `LINK_INVENTORY_SCAN_SITES` on the Function App with the explicit comma-separated site list.
+- **`broad` (default).** `Sites.Read.All` + `Sites.FullControl.All` (Application). Tenant-wide read enables the scanner to walk SP search across all sites. Find/replace writes still go through user OBO, so the *calling user* must have edit rights on a target site for any mutation to succeed.
+- **`selected`.** `Sites.Selected` (Application) + per-site grants via `Grant-PnPAzureADAppSitePermission`. The app sees only sites you explicitly grant. Set `LINK_INVENTORY_SCAN_SITES` on the Function App with the explicit comma-separated site list.
 
 ## Cost guard (recommended)
 
@@ -79,7 +79,7 @@ az rest --method PUT \
 
 Budgets *alert*, they don't *block*. The hard stop is "I see the alert email and delete the resource group." Plain pay-as-you-go subs do not have a spending limit; only Free Trial subs auto-suspend.
 
-## Step 1 — Register Azure resource providers (one-time per subscription)
+## Step 1: register Azure resource providers (one-time per subscription)
 
 Fresh Azure subscriptions don't have any resource providers registered. The Bicep deployment fails with cryptic "SubscriptionNotFound" errors otherwise.
 
@@ -89,16 +89,16 @@ az account set --subscription <your-subscription-id>
 ./scripts/register-providers.sh
 ```
 
-Takes 1–3 minutes. Idempotent — safe to re-run.
+Takes 1–3 minutes. Idempotent; safe to re-run.
 
-## Step 2 — Set up the Entra app in your SharePoint tenant
+## Step 2: set up the Entra app in your SharePoint tenant
 
 ```bash
 # Sign in to your SP tenant. Use --allow-no-subscriptions because most
 # SP-only tenants don't have an Azure subscription attached.
 az login --tenant <your-sp-tenant>.onmicrosoft.com --allow-no-subscriptions
 
-# Default — cert auth, broad app permissions (most common path):
+# Default: cert auth, broad app permissions (most common path):
 ./scripts/setup-entra.sh
 
 # Alternatives:
@@ -115,8 +115,8 @@ The script:
 4. Adds delegated SharePoint permissions (`AllSites.Read` + `AllSites.Write`) and Graph (`User.Read` + `GroupMember.Read.All`)
 5. Adds the application-level SharePoint permissions implied by `--app-perm` and grants admin consent
 6. Sets up the auth credential:
-   - `cert` mode — generates a self-signed cert (or uses `--cert-path`), uploads the public cert to the Entra app, writes the combined PEM as base64 to `scripts/.entra-output.env`
-   - `federation` mode — adds the federated credential immediately if `--mi-object-id` is given, otherwise defers to Step 4
+   - `cert` mode generates a self-signed cert (or uses `--cert-path`), uploads the public cert to the Entra app, and writes the combined PEM as base64 to `scripts/.entra-output.env`
+   - `federation` mode adds the federated credential immediately if `--mi-object-id` is given, otherwise defers to Step 4
 7. Creates the "Link Inventory Admins" Entra group and adds you to it
 8. Writes `scripts/.entra-output.env` with the values you need next
 
@@ -129,7 +129,7 @@ ENTRA_APP_OBJECT_ID=...
 ADMIN_GROUP_ID=...
 AUTH_MODE=cert
 APP_PERM=broad
-ENTRA_CLIENT_CERT_PEM_BASE64=...        # ← the long one. Treat as a secret.
+ENTRA_CLIENT_CERT_PEM_BASE64=...        # the long one. Treat as a secret.
 ENTRA_CLIENT_CERT_THUMBPRINT=...
 ```
 
@@ -137,7 +137,7 @@ For federation mode, the cert fields are absent and `MI_OBJECT_ID` is added if p
 
 > **Treat `.entra-output.env` as a secret in cert mode.** It contains the private key (base64-PEM) needed to authenticate as the Entra app. The repo's `.gitignore` excludes it, but mind any backup tools / sync clients pointed at the directory. For production deployments, replace the file-based cert with an Azure Key Vault reference (see *Production cert delivery* below).
 
-## Step 3 — Deploy Azure resources
+## Step 3: deploy Azure resources
 
 Switch back to your Azure-subscription context and deploy:
 
@@ -149,7 +149,7 @@ az account set --subscription <your-subscription-id>
 # Pull the values from the previous step
 source scripts/.entra-output.env
 
-# Deploy. Pick a unique projectName — used as the suffix in all resource names.
+# Deploy. Pick a unique projectName; it's used as the suffix in all resource names.
 # In cert mode, the combined PEM is passed via clientCertPemBase64.
 az deployment sub create \
   --location centralus \
@@ -164,9 +164,9 @@ az deployment sub create \
       clientCertPemBase64=${ENTRA_CLIENT_CERT_PEM_BASE64:-""}
 ```
 
-For federation mode, omit `clientCertPemBase64` (or leave it empty — the Bicep template gates the cert app setting on `authMode == 'cert'`).
+For federation mode, omit `clientCertPemBase64` (or leave it empty; the Bicep template gates the cert app setting on `authMode == 'cert'`).
 
-> **Windows users — if you hit `[WinError 5] Access is denied`** when `az` tries to subprocess Bicep, run `./scripts/install-bicep.sh` once, then compile to ARM JSON manually and pass that instead:
+> **Windows users:** if you hit `[WinError 5] Access is denied` when `az` tries to subprocess Bicep, run `./scripts/install-bicep.sh` once, then compile to ARM JSON manually and pass that instead:
 >
 > ```bash
 > ./scripts/install-bicep.sh
@@ -178,10 +178,10 @@ For federation mode, omit `clientCertPemBase64` (or leave it empty — the Bicep
 
 Takes 3–5 minutes. The deployment outputs four values:
 
-- `functionAppName` — pass to `func azure functionapp publish`
-- `functionAppHostname` — for the SPFx web part property
-- `miPrincipalId` — feeds into the next step
-- `azureTenantId` — feeds into the next step
+- `functionAppName`: pass to `func azure functionapp publish`
+- `functionAppHostname`: for the SPFx web part property
+- `miPrincipalId`: feeds into the next step
+- `azureTenantId`: feeds into the next step
 
 You can capture them with `--query`:
 
@@ -198,9 +198,9 @@ export MI_PRINCIPAL_ID=$(echo  "$DEPLOY_OUT" | node -p "JSON.parse(require('fs')
 export AZURE_TENANT_ID=$(echo  "$DEPLOY_OUT" | node -p "JSON.parse(require('fs').readFileSync(0,'utf8')).azureTenantId.value")
 ```
 
-## Step 4 — Wire up the federated credential (federation mode only)
+## Step 4: wire up the federated credential (federation mode only)
 
-**Skip this step if `AUTH_MODE=cert`** — the cert was uploaded in Step 2 and the Function App got the matching private key from the Bicep parameter in Step 3. You're done with auth setup.
+**Skip this step if `AUTH_MODE=cert`.** The cert was uploaded in Step 2 and the Function App got the matching private key from the Bicep parameter in Step 3. You're done with auth setup.
 
 For federation mode, go back to the SP-tenant context to add the federated credential on the Entra app:
 
@@ -217,7 +217,7 @@ This is the moment the Function App's MI is allowed to act as the Entra app for 
 
 **Reminder:** federation only works if the Function App's MI and the Entra app live in the same Entra tenant. If they don't (e.g. Azure subscription in tenant A, SharePoint in tenant B), the federated credential exchange returns `AADSTS700236` and you'll need to redeploy in cert mode.
 
-## Step 5 — Build and publish the function code
+## Step 5: build and publish the function code
 
 ```bash
 cd func
@@ -228,7 +228,7 @@ func azure functionapp publish $FUNCTION_APP_NAME --typescript --build remote
 
 The `--build remote` flag tells Azure (Oryx) to run `npm install` server-side, which is what a Linux Consumption plan needs.
 
-## Step 6 — Smoke test
+## Step 6: smoke test
 
 ```bash
 # Function alive (auth-gated, so 401 = success)
@@ -237,12 +237,12 @@ curl -s -o /dev/null -w "%{http_code}\n" "https://${FUNCTION_APP_NAME}.azurewebs
 
 # Function count
 az functionapp function list --name $FUNCTION_APP_NAME --resource-group rg-linkinv01 --query "length(@)"
-# expect: 30
+# expect: 32  (28 link-inventory + duplicates + 2 orphan-assets + 2 timer triggers)
 ```
 
-A 401 here is the **good** outcome — it means Node started, the runtime registered functions, and the auth middleware is rejecting the unauthenticated request. The actual end-to-end auth check happens once the SPFx web part is configured to call the function.
+A 401 here is the **good** outcome. It means Node started, the runtime registered functions, and the auth middleware is rejecting the unauthenticated request. The actual end-to-end auth check happens once the SPFx web part is configured to call the function.
 
-## Step 7 — SPFx side (web part deployment)
+## Step 7: SPFx side (web part deployment)
 
 ### 7a. Build the .sppkg
 
@@ -258,7 +258,7 @@ npm run build
 spfx/link-inventory-admin/sharepoint/solution/link-inventory-admin.sppkg
 ```
 
-(That path is gitignored — the .sppkg gets regenerated on every build.)
+(That path is gitignored; the .sppkg gets regenerated on every build.)
 
 ### 7b. Upload to the tenant app catalog
 
@@ -273,7 +273,7 @@ If your tenant doesn't have an app catalog yet, create one first via the SharePo
 Drag the `.sppkg` from your local file system into the library. SharePoint shows a trust dialog:
 
 - **Title:** "Do you trust Link Inventory Admin?"
-- **Checkbox:** "Make this solution available to all sites in the organization" — **check it**
+- **Checkbox:** "Make this solution available to all sites in the organization"; **check it**
 - Click **Deploy**
 
 The package shows up in the catalog with **Deployed = Yes**.
@@ -310,7 +310,7 @@ The property pane opens automatically when you add the web part. Set:
 | Property | Value |
 |---|---|
 | **Azure Function URL** | `https://<function-app-name>.azurewebsites.net` (the value the Bicep deployment printed as `functionAppHostname`, with `https://` prefix) |
-| **Entra app api:// URI** | `api://<entra-client-id>` (use the URI form — the friendly display name intermittently fails to resolve. The value is in `scripts/.entra-output.env` as `ENTRA_CLIENT_ID`.) |
+| **Entra app api:// URI** | `api://<entra-client-id>` (use the URI form; the friendly display name intermittently fails to resolve. The value is in `scripts/.entra-output.env` as `ENTRA_CLIENT_ID`.) |
 
 Click **Apply**, then **Save and publish** at the top of the page.
 
@@ -319,13 +319,13 @@ Click **Apply**, then **Save and publish** at the top of the page.
 When the first user opens the published page, AAD prompts for consent to the `user_impersonation` scope on your Entra app:
 
 > **Permissions requested**
-> link-inventory-func — Access link inventory function as you
+> link-inventory-func: Access link inventory function as you
 
 Click **Accept**. (If you're a global admin, you can also click **Consent on behalf of your organization** to skip this prompt for everyone else.)
 
-After consent the web part loads — three tabs (Link Inventory, Duplicates, Help). The Link Inventory tab will show "no scans yet" until you trigger your first scan from the **Run scan** dropdown.
+After consent the web part loads with four tabs (Link Inventory, Duplicates, Orphans, Help). The Link Inventory tab will show "no scans yet" until you trigger your first scan from the **Run scan** dropdown. The Orphans tab will show "No backlinks index yet" until that first page-scan completes.
 
-After your first unified scan completes, the Link Inventory tab looks like this — pages and document files merged into one inventory, with sharing wrappers, AllItems URLs, mailto/external/relative all classified into the same table:
+After your first unified scan completes, the Link Inventory tab shows pages and document files merged into one inventory, with sharing wrappers, AllItems URLs, mailto/external/relative all classified into the same table:
 
 ![Link inventory after first unified scan](images/inventory-overview.png)
 
@@ -335,11 +335,11 @@ Click any row to open the link details panel. Page rows expose a **Fix this link
 
 Document rows show the same suggestion but no write actions (rewriting hyperlinks inside binary OOXML/PDF files is out of scope):
 
-![Link details panel for a doc-row — Read-only](images/detail-doc-row.png)
+![Link details panel for a doc-row: read-only](images/detail-doc-row.png)
 
 The **Duplicates** tab uses SHA-256 hashing across the scanned libraries to surface exact duplicates, stale copies (via version-history walk), and same-name pairs:
 
-![Duplicates tab — Exact / Stale / Same-name groups](images/duplicates-tab.png)
+![Duplicates tab: exact / stale / same-name groups](images/duplicates-tab.png)
 
 ### 7f. Verify the auth flow worked
 
@@ -352,7 +352,7 @@ fetch('https://<function-app-name>.azurewebsites.net/api/link-inventory/whoami',
 })
 ```
 
-In practice you don't need to write this — if the web part renders and the **Run scan** button is visible (admin-only), the auth handshake is working end-to-end.
+In practice you don't need to write this. If the web part renders and the **Run scan** button is visible (admin-only), the auth handshake is working end-to-end.
 
 ## Production cert delivery (recommended for cert mode)
 
@@ -361,7 +361,7 @@ The default flow ships the combined PEM as a plain Function App setting, which i
 For production, replace the literal value with an Azure Key Vault reference:
 
 1. Create a Key Vault in the same subscription as the Function App.
-2. Import the combined PEM as a Key Vault *secret* (not a *certificate* — the Function App needs the raw base64 string the code already expects, and Key Vault certificates expose the PFX form):
+2. Import the combined PEM as a Key Vault *secret* (not a *certificate*; the Function App needs the raw base64 string the code already expects, and Key Vault certificates expose the PFX form):
    ```bash
    az keyvault secret set --vault-name <vault> --name link-inventory-client-cert --value "$(cat scripts/.cert/li-cert-combined.pem | base64 -w 0)"
    ```
@@ -370,7 +370,7 @@ For production, replace the literal value with an Azure Key Vault reference:
    ```
    LINK_INVENTORY_CLIENT_CERT_PEM_BASE64=@Microsoft.KeyVault(SecretUri=https://<vault>.vault.azure.net/secrets/link-inventory-client-cert)
    ```
-5. Rotate by updating the secret value in Key Vault — the Function App picks up the new version automatically (the reference doesn't pin a version unless you add `/<version>` to the URI).
+5. Rotate by updating the secret value in Key Vault. The Function App picks up the new version automatically (the reference doesn't pin a version unless you add `/<version>` to the URI).
 
 Bicep doesn't enforce the Key Vault path because the OSS scripts default to file-based cert delivery for first-run simplicity. Once you've validated the deploy, switch to Key Vault and delete the local PEM files.
 
@@ -384,7 +384,7 @@ npm run build
 func azure functionapp publish $FUNCTION_APP_NAME --typescript --build remote
 ```
 
-That's it — settings persist across deploys.
+That's it; settings persist across deploys.
 
 ## Cleanup
 
@@ -401,25 +401,25 @@ az ad group delete --group <ADMIN_GROUP_ID>
 
 ## Troubleshooting
 
-**Windows: `[WinError 5] Access is denied`** when running `az deployment sub create` or `az bicep build` — `az` can't subprocess its bundled Bicep binary. Workaround: run `./scripts/install-bicep.sh`, then compile to ARM JSON manually (`~/.azure/bin/bicep build infra/main.bicep --outfile /tmp/main.arm.json`) and deploy the JSON file. See the note inline in Step 3 above.
+**Windows: `[WinError 5] Access is denied`** when running `az deployment sub create` or `az bicep build`: `az` can't subprocess its bundled Bicep binary. Workaround: run `./scripts/install-bicep.sh`, then compile to ARM JSON manually (`~/.azure/bin/bicep build infra/main.bicep --outfile /tmp/main.arm.json`) and deploy the JSON file. See the note inline in Step 3 above.
 
-**`SubscriptionNotFound` during Bicep deploy** — resource providers aren't registered. Run `./scripts/register-providers.sh` and retry.
+**`SubscriptionNotFound` during Bicep deploy:** resource providers aren't registered. Run `./scripts/register-providers.sh` and retry.
 
-**`func azure functionapp publish` succeeds but `/api/link-inventory/whoami` returns 404** — usually means `--build remote` was omitted and dependencies weren't installed server-side. Re-publish with `--build remote`.
+**`func azure functionapp publish` succeeds but `/api/link-inventory/whoami` returns 404:** usually means `--build remote` was omitted and dependencies weren't installed server-side. Re-publish with `--build remote`.
 
-**Function returns 500** — check Application Insights traces:
+**Function returns 500:** check Application Insights traces:
 ```bash
 APP_ID=$(az monitor app-insights component show --app appi-<projectName> --resource-group rg-<projectName> --query appId -o tsv)
 az monitor app-insights query --app $APP_ID --analytics-query "exceptions | top 10 by timestamp desc | project timestamp, type, outerMessage"
 ```
 
-**`AADSTS500011` (resource not found) when SPFx calls the function** — `entraAppApiUri` web part property must be the URI form (`api://<guid>`), not the friendly display name. Friendly-name lookup intermittently fails in the SP approved-permissions list.
+**`AADSTS500011` (resource not found) when SPFx calls the function:** `entraAppApiUri` web part property must be the URI form (`api://<guid>`), not the friendly display name. Friendly-name lookup intermittently fails in the SP approved-permissions list.
 
-**`AADSTS700236` during federated credential exchange** — Microsoft blocks Entra-to-Entra federation cross-tenant. If your Function App's MI lives in a different Entra tenant from the Entra app (common when Azure subscription is in tenant A and SharePoint in tenant B), redeploy in `cert` mode: re-run `setup-entra.sh` (no flags = cert default) and re-deploy the Bicep with `authMode=cert clientCertPemBase64=$ENTRA_CLIENT_CERT_PEM_BASE64`.
+**`AADSTS700236` during federated credential exchange:** Microsoft blocks Entra-to-Entra federation cross-tenant. If your Function App's MI lives in a different Entra tenant from the Entra app (common when Azure subscription is in tenant A and SharePoint in tenant B), redeploy in `cert` mode: re-run `setup-entra.sh` (no flags = cert default) and re-deploy the Bicep with `authMode=cert clientCertPemBase64=$ENTRA_CLIENT_CERT_PEM_BASE64`.
 
-**SP search returns `Unsupported app only token`** — SharePoint REST search requires `appidacr=2` tokens (cert or federated). If you somehow ended up with a `client_secret`-issued token, replace with a cert-issued credential. This repo doesn't offer a secret mode for that reason.
+**SP search returns `Unsupported app only token`:** SharePoint REST search requires `appidacr=2` tokens (cert or federated). If you somehow ended up with a `client_secret`-issued token, replace with a cert-issued credential. This repo doesn't offer a secret mode for that reason.
 
-**Cert appears uploaded but token call fails with `invalid_client`** — usually a thumbprint mismatch between what the Entra app expects and what the JWT `x5t` header carries. Verify the public PEM uploaded to the app matches the private key in `LINK_INVENTORY_CLIENT_CERT_PEM_BASE64`:
+**Cert appears uploaded but token call fails with `invalid_client`:** usually a thumbprint mismatch between what the Entra app expects and what the JWT `x5t` header carries. Verify the public PEM uploaded to the app matches the private key in `LINK_INVENTORY_CLIENT_CERT_PEM_BASE64`:
 ```bash
 # Public part the Entra app holds (compare customKeyIdentifier to your local thumbprint):
 az ad app show --id $ENTRA_CLIENT_ID --query "keyCredentials[].customKeyIdentifier" -o tsv
@@ -433,19 +433,19 @@ openssl x509 -in scripts/.cert/li-cert.pem -noout -fingerprint -sha1 | sed 's/^.
 Canonical Microsoft Learn docs for the patterns this guide builds on. Read these if any step's *why* feels unclear.
 
 **Federated identity / OBO** (Step 2, Step 4):
-- [Workload identity federation](https://learn.microsoft.com/entra/workload-id/workload-identity-federation) — overview of the trust pattern between an external identity (the Function App's MI in your Azure subscription) and an Entra app (in your SP tenant).
-- [Configure an application to trust a managed identity](https://learn.microsoft.com/entra/workload-id/workload-identity-federation-config-app-trust-managed-identity) — exact field semantics for the federated credential (`issuer`, `subject`, `audiences`). The `add-federated-credential.sh` script automates this.
-- [Microsoft Graph permissions reference](https://learn.microsoft.com/graph/permissions-reference) — authoritative list of the Graph permission GUIDs `setup-entra.sh` requests (`User.Read`, `GroupMember.Read.All`).
+- [Workload identity federation](https://learn.microsoft.com/entra/workload-id/workload-identity-federation): overview of the trust pattern between an external identity (the Function App's MI in your Azure subscription) and an Entra app (in your SP tenant).
+- [Configure an application to trust a managed identity](https://learn.microsoft.com/entra/workload-id/workload-identity-federation-config-app-trust-managed-identity): exact field semantics for the federated credential (`issuer`, `subject`, `audiences`). The `add-federated-credential.sh` script automates this.
+- [Microsoft Graph permissions reference](https://learn.microsoft.com/graph/permissions-reference): authoritative list of the Graph permission GUIDs `setup-entra.sh` requests (`User.Read`, `GroupMember.Read.All`).
 
 **Bicep** (Step 3):
-- [Subscription deployments with Bicep files](https://learn.microsoft.com/azure/azure-resource-manager/bicep/deploy-to-subscription) — `targetScope = 'subscription'` semantics. `infra/main.bicep` uses this scope so the Bicep can create the resource group itself.
+- [Subscription deployments with Bicep files](https://learn.microsoft.com/azure/azure-resource-manager/bicep/deploy-to-subscription): `targetScope = 'subscription'` semantics. `infra/main.bicep` uses this scope so the Bicep can create the resource group itself.
 
 **Azure Functions** (Step 5):
-- [Azure Functions Node.js developer guide (v4 model)](https://learn.microsoft.com/azure/azure-functions/functions-reference-node) — explains the `app.http(...)` registration pattern and the `main` field in `package.json` that loads `dist/src/index.js`.
-- [Deployment technologies in Azure Functions](https://learn.microsoft.com/azure/azure-functions/functions-deployment-technologies) — covers zip deploy, `WEBSITE_RUN_FROM_PACKAGE`, and the Linux Consumption "remote build" flow that `--build remote` triggers (Oryx running `npm install` on the server).
+- [Azure Functions Node.js developer guide (v4 model)](https://learn.microsoft.com/azure/azure-functions/functions-reference-node): explains the `app.http(...)` registration pattern and the `main` field in `package.json` that loads `dist/src/index.js`.
+- [Deployment technologies in Azure Functions](https://learn.microsoft.com/azure/azure-functions/functions-deployment-technologies): covers zip deploy, `WEBSITE_RUN_FROM_PACKAGE`, and the Linux Consumption "remote build" flow that `--build remote` triggers (Oryx running `npm install` on the server).
 
 **SPFx** (Step 7):
-- [Connect to Entra ID-secured APIs in SharePoint Framework solutions](https://learn.microsoft.com/sharepoint/dev/spfx/use-aadhttpclient) — explains how `AadHttpClient.getClient(api://<guid>)` works under the covers (the SharePoint Online Client Extensibility service principal, the implicit OAuth flow). Useful context for why we configure `entraAppApiUri` as a web part property.
+- [Connect to Entra ID-secured APIs in SharePoint Framework solutions](https://learn.microsoft.com/sharepoint/dev/spfx/use-aadhttpclient): explains how `AadHttpClient.getClient(api://<guid>)` works under the covers (the SharePoint Online Client Extensibility service principal, the implicit OAuth flow). Useful context for why we configure `entraAppApiUri` as a web part property.
 
 **SharePoint REST** (used internally by `setup-entra.sh` and the validation flow):
-- [Manage modern SharePoint sites using REST](https://learn.microsoft.com/sharepoint/dev/apis/site-creation-rest) — the `_api/SPSiteManager/create` endpoint used to provision the admin site.
+- [Manage modern SharePoint sites using REST](https://learn.microsoft.com/sharepoint/dev/apis/site-creation-rest): the `_api/SPSiteManager/create` endpoint used to provision the admin site.

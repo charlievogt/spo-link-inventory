@@ -618,6 +618,48 @@ export class LinkInventoryService {
     const res = await this._get<{ ok: boolean; job: IDuplicatesBootstrapJob }>(`/api/duplicates/bootstrap/${jobId}`);
     return res.job;
   }
+
+  /**
+   * Generate the orphan-asset report. Walks SiteAssets/SitePages on every
+   * page-scanned site (or just the requested ones) and returns files that
+   * the persistent backlinks index says nothing references.
+   *
+   * Refuses (409) with a typed error message when the index is missing or
+   * older than ORPHAN_INDEX_BLOCK_AGE_MIN — pass `acknowledgedStaleIndex:
+   * true` to override after the user has confirmed they understand the
+   * risk (pages added since the last scan can false-flag as orphan).
+   */
+  public async getOrphansReport(opts?: {
+    sites?: string[];
+    maxConcurrency?: number;
+    acknowledgedStaleIndex?: boolean;
+  }): Promise<IOrphansReport> {
+    return this._post<IOrphansReport>('/api/orphan-assets/report', opts ?? {});
+  }
+
+  /**
+   * Recycle a list of orphan files. Default `dryRun: true` returns
+   * status='preview' rows without making any SP calls; pass `dryRun:
+   * false` to actually recycle.
+   *
+   * Recycling executes as the calling user via delegated AllSites.Write
+   * OBO — site recycle bins record the user as the deleter, and SP
+   * enforces the user's actual delete permissions. Sites where the user
+   * lacks write are dropped from the plan and reported in
+   * `summary.droppedSites`.
+   *
+   * Each run creates a synthetic 'orphan-recycle' job in the existing
+   * job table. The full per-file results are persisted to the same blob
+   * shape as scan jobs, so list/show/delete via the existing job APIs
+   * "just works".
+   */
+  public async recycleOrphans(input: {
+    files: Array<{ sitePath: string; serverRelativeUrl: string }>;
+    dryRun?: boolean;
+    confirmReportGeneratedAt?: string;
+  }): Promise<IOrphanRecycleResponse> {
+    return this._post<IOrphanRecycleResponse>('/api/orphan-assets/recycle', input);
+  }
 }
 
 export interface IBacklinkSource {
@@ -872,4 +914,83 @@ export interface ILinkInventoryReplaceResponse {
   };
   droppedSites?: string[];
   results: IReplacePageResult[];
+}
+
+/**
+ * One orphan file row in an OrphansReport. An "orphan" is a file under
+ * SiteAssets/SitePages/<sitePath>/ that no current page in the persistent
+ * backlinks index references — including via banner image URLs (which
+ * the scanner picks up via the BannerImageUrl extension).
+ */
+export interface IOrphanFile {
+  sitePath: string;
+  serverRelativeUrl: string;
+  fileName: string;
+  /** First path segment under SiteAssets/SitePages/, e.g. a page name or GUID. */
+  pageFolder: string;
+  size: number;
+  /** ISO timestamp. */
+  modified: string;
+  canonicalKey: string;
+}
+
+export interface IOrphansReportSite {
+  sitePath: string;
+  siteUrl: string;
+  filesScanned: number;
+  orphans: IOrphanFile[];
+  /** Set when the per-site walk failed; the wider report still succeeded. */
+  error?: string;
+}
+
+export interface IOrphansReport {
+  ok: true;
+  generatedAt: string;
+  /**
+   * Age of the persistent backlinks index used to compute the report.
+   * `staleWarn` flips when the index is older than the configured warn
+   * threshold (default 60 min); the UI should display a yellow note in
+   * that case. The block threshold (default 360 min) is enforced server-
+   * side and surfaces as a 409 unless the request body sets
+   * `acknowledgedStaleIndex: true`.
+   */
+  indexAge: { scannedAt: string; ageMinutes: number; staleWarn: boolean };
+  /** User-facing freshness note from the server. Present when warn or block-overridden. */
+  warning?: string;
+  sites: IOrphansReportSite[];
+  totals: { sitesScanned: number; filesScanned: number; orphans: number };
+}
+
+/** Per-file outcome from a recycle run. */
+export interface IOrphanRecycleResult {
+  sitePath: string;
+  serverRelativeUrl: string;
+  status:
+    | 'recycled'
+    | 'preview'
+    | 'not-found'
+    | 'forbidden'
+    | 'error'
+    | 'site-not-writable';
+  /** Recycle-bin item GUID, when SP returned one. Useful for restore audit. */
+  recycleBinItemId?: string;
+  error?: string;
+}
+
+export interface IOrphanRecycleResponse {
+  ok: true;
+  dryRun: boolean;
+  /** Synthetic 'orphan-recycle' job id; queryable via the existing job APIs. */
+  runId: string;
+  summary: {
+    totalFiles: number;
+    recycled: number;
+    preview: number;
+    notFound: number;
+    forbidden: number;
+    error: number;
+    /** Sites where the calling user lacked write permission; their files were skipped. */
+    droppedSites: string[];
+  };
+  results: IOrphanRecycleResult[];
 }

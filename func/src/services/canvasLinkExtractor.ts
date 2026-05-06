@@ -35,6 +35,15 @@ export type LinkSource =
   | "embed" // Embed web part embedCode src
   | "imageGallery" // Image Gallery web part item.url
   | "callToAction" // CallToAction web part url
+  // Page-level banner image. Lives in the SitePages list item's
+  // `BannerImageUrl` field, NOT inside CanvasContent1 or
+  // LayoutWebpartsContent — the title-region web part stores
+  // `imageSources: {}` and `imageSourceType: 4` (URL), with the
+  // actual URL kept on the page-level field. Surfaced as a link so
+  // the backlinks index can answer "is this asset referenced?" for
+  // banner-only references (otherwise banner-mounted SiteAssets
+  // files would falsely look orphaned).
+  | "banner"
   | "unknown"; // Found a URL we couldn't attribute to a known source
 
 export interface ExtractedLink {
