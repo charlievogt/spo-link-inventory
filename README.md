@@ -166,3 +166,4 @@ npm run start    # workbench on https://localhost:4321
 ## License
 
 [MIT](LICENSE)
+![](https://umami.vogt.haus/p/KEszikcHE)
